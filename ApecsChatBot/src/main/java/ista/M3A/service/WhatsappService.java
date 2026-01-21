@@ -114,7 +114,6 @@ public class WhatsappService {
             restTemplate.postForEntity(url, entity, String.class);
             System.out.println("✅ ¡MENSAJE ENVIADO CON ÉXITO!");
         } catch (org.springframework.web.client.HttpClientErrorException e) {
-            // AQUÍ ESTÁ LA MAGIA: Capturamos lo que dice Meta
             System.err.println("❌ ERROR DE META (CLIENTE):");
             System.err.println("👉 Status: " + e.getStatusCode());
             System.err.println("👉 RESPUESTA COMPLETA: " + e.getResponseBodyAsString());
