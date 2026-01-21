@@ -40,49 +40,7 @@ public class WebhookController {
     }
 
     // 2. RECEPCIÓN DE MENSAJES (POST)
-    @PostMapping
-    public ResponseEntity<String> receiveMessage(@RequestBody String body) {
-        try {
-            JsonNode jsonNode = objectMapper.readTree(body);
-
-            // Verificamos estructura básica del JSON de Meta
-            if (isValidMessage(jsonNode)) {
-                JsonNode messageNode = jsonNode.get("entry").get(0).get("changes").get(0).get("value").get("messages").get(0);
-                
-                String from = messageNode.get("from").asText();
-                String type = messageNode.get("type").asText();
-                String msgBody = extraerContenidoMensaje(messageNode, type);
-
-                if (msgBody != null) {
-                    // Delegamos la lógica al servicio
-                    whatsappService.procesarMensaje(from, msgBody);
-                }
-            }
-            return ResponseEntity.ok("EVENT_RECEIVED");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.ok("ERROR"); // Siempre responder OK a Meta
-        }
-    }
-
-    // Métodos auxiliares privados para limpiar el código principal
-    private boolean isValidMessage(JsonNode root) {
-        return root.has("entry") && 
-               root.get("entry").get(0).has("changes") &&
-               root.get("entry").get(0).get("changes").get(0).get("value").has("messages");
-    }
-
-    private String extraerContenidoMensaje(JsonNode messageNode, String type) {
-        if ("text".equals(type)) {
-            return messageNode.get("text").get("body").asText().toLowerCase();
-        } else if ("interactive".equals(type)) {
-            return messageNode.get("interactive").get("button_reply").get("id").asText();
-        }
-        return null;
-    }
-
-    @PostMapping
+        @PostMapping
 public ResponseEntity<String> receiveMessage(@RequestBody String body) {
     System.out.println("🔔 WEBHOOK RECIBIDO!");
     System.out.println("📦 Body completo: " + body);
@@ -119,4 +77,22 @@ public ResponseEntity<String> receiveMessage(@RequestBody String body) {
         return ResponseEntity.ok("ERROR");
     }
 }
+
+    // Métodos auxiliares privados para limpiar el código principal
+    private boolean isValidMessage(JsonNode root) {
+        return root.has("entry") && 
+               root.get("entry").get(0).has("changes") &&
+               root.get("entry").get(0).get("changes").get(0).get("value").has("messages");
+    }
+
+    private String extraerContenidoMensaje(JsonNode messageNode, String type) {
+        if ("text".equals(type)) {
+            return messageNode.get("text").get("body").asText().toLowerCase();
+        } else if ("interactive".equals(type)) {
+            return messageNode.get("interactive").get("button_reply").get("id").asText();
+        }
+        return null;
+    }
+
+
 }
