@@ -9,5 +9,5 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
-# NO necesitas EXPOSE en Render - usa PORT dinámico
-ENTRYPOINT ["java","-jar","app.jar"]
+# Usar variable PORT de Render
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-10000} -jar app.jar"]
