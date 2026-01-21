@@ -84,6 +84,7 @@ public class WhatsappService {
     }
 
     // --- MÉTODO GENÉRICO PARA ENVIAR TEXTO (EL MOTOR) ---
+    // --- MÉTODO CON RAYOS X (DEBUG EXTREMO) ---
     private void enviarTexto(String numeroDestino, String mensaje) {
         String url = apiUrl + phoneId + "/messages";
 
@@ -102,11 +103,24 @@ public class WhatsappService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
+        // IMPRIMIR DATOS ANTES DE DISPARAR (Para ver si algo va nulo)
+        System.out.println("🚀 INTENTANDO ENVIAR...");
+        System.out.println("👉 URL: " + url);
+        System.out.println("👉 Token (primeros 5): " + (token != null ? token.substring(0, 5) : "NULL"));
+        System.out.println("👉 ID Teléfono: " + phoneId);
+        System.out.println("👉 Destinatario: " + numeroDestino);
+
         try {
             restTemplate.postForEntity(url, entity, String.class);
-            System.out.println("✅ Mensaje enviado a: " + numeroDestino);
+            System.out.println("✅ ¡MENSAJE ENVIADO CON ÉXITO!");
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // AQUÍ ESTÁ LA MAGIA: Capturamos lo que dice Meta
+            System.err.println("❌ ERROR DE META (CLIENTE):");
+            System.err.println("👉 Status: " + e.getStatusCode());
+            System.err.println("👉 RESPUESTA COMPLETA: " + e.getResponseBodyAsString());
         } catch (Exception e) {
-            System.err.println("❌ Error enviando mensaje: " + e.getMessage());
+            System.err.println("❌ ERROR GENÉRICO EN JAVA: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
