@@ -9,5 +9,5 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
-# Usar variable PORT de Render
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-10000} -jar app.jar"]
+# CRÍTICO: Usar variable PORT de Render
+CMD ["sh", "-c", "java -Dserver.port=${PORT} -jar app.jar"]
