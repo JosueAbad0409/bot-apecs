@@ -28,25 +28,25 @@ public class WhatsappService {
     // --- LÓGICA DEL NEGOCIO ---
     
     public void procesarMensaje(String from, String msgBody) {
-        System.out.println("Procesando mensaje de " + from + ": " + msgBody);
+        // 1. Convertimos todo a minúsculas para evitar problemas
+        String mensaje = msgBody.toLowerCase().trim();
+        
+        System.out.println("Procesando mensaje de " + from + ": " + mensaje);
 
-        if (msgBody.contains("hola") || msgBody.contains("inicio")) {
+        // 2. Lógica mejorada
+        if (mensaje.contains("hola") || mensaje.contains("inicio") || mensaje.contains("buenas")) {
             enviarMenuPrincipal(from);
         } 
-        else if (msgBody.equals("btn_cursos")) {
+        else if (mensaje.equals("btn_cursos")) {
             enviarListaCursos(from);
         } 
-        else if (msgBody.equals("btn_academia")) {
+        else if (mensaje.equals("btn_academia")) {
             enviarInfoAcademia(from);
-        } 
-        else if (Arrays.asList("1", "2", "3", "4", "5").contains(msgBody)) {
-            // Aquí podrías validar si viene de la opción cursos
-            enviarAsignacionAsesor(from, "Cursos");
-        } 
+        }
         else {
-            // Manejo por defecto o captura de datos (Nombre/Cedula)
-            // Por ahora, solo confirmamos recepción si no es un comando conocido
-            // enviarTexto(from, "Gracias, un asesor revisará tu mensaje.");
+            // 3. RESPUESTA POR DEFECTO (¡Esto es lo que te faltaba!)
+            // Si escribe cualquier otra cosa, le respondemos para no dejarlo en visto.
+            enviarTexto(from, "🤖 No entendí tu mensaje, pero estoy vivo. Escribe 'Hola' para ver el menú.");
         }
     }
 
@@ -164,4 +164,5 @@ public class WhatsappService {
         }
     }
 }
+
 
