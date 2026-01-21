@@ -81,4 +81,42 @@ public class WebhookController {
         }
         return null;
     }
+
+    @PostMapping
+public ResponseEntity<String> receiveMessage(@RequestBody String body) {
+    System.out.println("🔔 WEBHOOK RECIBIDO!");
+    System.out.println("📦 Body completo: " + body);
+    
+    try {
+        JsonNode jsonNode = objectMapper.readTree(body);
+
+        if (isValidMessage(jsonNode)) {
+            System.out.println("✅ Mensaje válido detectado");
+            
+            JsonNode messageNode = jsonNode.get("entry").get(0)
+                .get("changes").get(0).get("value").get("messages").get(0);
+            
+            String from = messageNode.get("from").asText();
+            String type = messageNode.get("type").asText();
+            String msgBody = extraerContenidoMensaje(messageNode, type);
+
+            System.out.println("👤 De: " + from);
+            System.out.println("📝 Tipo: " + type);
+            System.out.println("💬 Contenido: " + msgBody);
+
+            if (msgBody != null) {
+                whatsappService.procesarMensaje(from, msgBody);
+            }
+        } else {
+            System.out.println("⚠️ Mensaje NO válido - posiblemente status update");
+        }
+        
+        return ResponseEntity.ok("EVENT_RECEIVED");
+
+    } catch (Exception e) {
+        System.err.println("❌ ERROR procesando webhook:");
+        e.printStackTrace();
+        return ResponseEntity.ok("ERROR");
+    }
+}
 }
