@@ -128,15 +128,40 @@ public class WhatsappService {
 
     private void ejecutarEnvio(Map<String, Object> payload) {
         String url = apiUrl + phoneId + "/messages";
+        
+        // 1. Imprimir datos clave para depurar (OJO: No imprimimos el token completo por seguridad)
+        System.out.println("--- INICIO DEBUG ENVÍO ---");
+        System.out.println("1. URL Destino: " + url);
+        System.out.println("2. Phone ID usado: " + phoneId);
+        System.out.println("3. Token (Primeros 10 chars): " + (token != null && token.length() > 10 ? token.substring(0, 10) + "..." : "NULO O MUY CORTO"));
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+        
         try {
-            restTemplate.postForEntity(url, entity, String.class);
+            // Intentamos enviar
+            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+            
+            // Si funciona:
+            System.out.println("4. ¡ÉXITO! Status Code: " + response.getStatusCode());
+            System.out.println("5. Respuesta de Meta: " + response.getBody());
+            
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // SI META NOS RECHAZA (Error 4xx)
+            System.err.println("!!! ERROR HTTP DE META !!!");
+            System.err.println("Status Code: " + e.getStatusCode());
+            System.err.println("CUERPO DEL ERROR (LEER ESTO): " + e.getResponseBodyAsString());
         } catch (Exception e) {
-            System.err.println("Error enviando a Meta: " + e.getMessage());
+            // OTROS ERRORES (Java, Red, etc)
+            System.err.println("!!! ERROR INTERNO !!!");
+            System.err.println("Mensaje: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            System.out.println("--- FIN DEBUG ENVÍO ---");
         }
     }
 }
+
