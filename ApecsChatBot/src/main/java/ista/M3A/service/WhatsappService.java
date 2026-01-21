@@ -6,7 +6,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -26,35 +25,76 @@ public class WhatsappService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // ESTE ES EL MÉTODO QUE RECIBE EL WEBHOOK
+    // --- CEREBRO DEL BOT 🧠 ---
     public void procesarMensaje(String from, String msgBody) {
-        System.out.println("📨 MENSAJE RECIBIDO DE: " + from);
-        System.out.println("💬 TEXTO: " + msgBody);
-        
-        // FORZAMOS LA RESPUESTA SIEMPRE (Para probar conexión)
-        enviarMensajePrueba(from);
+        // 1. Limpiamos el mensaje (quitar espacios y minúsculas)
+        String mensaje = msgBody.trim().toLowerCase();
+
+        System.out.println("📩 Mensaje de " + from + ": " + mensaje);
+
+        // 2. Lógica del Menú Numérico
+        if (mensaje.contains("hola") || mensaje.contains("inicio") || mensaje.contains("buenas")) {
+            enviarMenuPrincipal(from);
+        } 
+        else if (mensaje.equals("1")) {
+            enviarListaCursos(from);
+        } 
+        else if (mensaje.equals("2")) {
+            enviarContactoAsesor(from);
+        } 
+        else {
+            // Si escribe cualquier otra cosa, le recordamos el menú
+            enviarTexto(from, "🤖 No entendí. Por favor responde con el número de la opción:\n\n1️⃣ Ver Cursos\n2️⃣ Hablar con Asesor");
+        }
     }
 
-    private void enviarMensajePrueba(String numeroDestino) {
+    // --- OPCIÓN 0: EL MENÚ PRINCIPAL ---
+    private void enviarMenuPrincipal(String numero) {
+        String texto = "👋 *¡Hola! Bienvenido a APECS* 🎓\n" +
+                       "Tu futuro tecnológico empieza aquí.\n\n" +
+                       "¿En qué podemos ayudarte hoy?\n" +
+                       "*(Escribe el número de la opción)*\n\n" +
+                       "1️⃣ Ver Cursos Disponibles\n" +
+                       "2️⃣ Hablar con un Asesor Humano";
+        enviarTexto(numero, texto);
+    }
+
+    // --- OPCIÓN 1: LOS CURSOS ---
+    private void enviarListaCursos(String numero) {
+        String texto = "📚 *Nuestros Cursos Destacados:*\n\n" +
+                       "☕ *Java Spring Boot* - Backend Pro\n" +
+                       "🐍 *Python para Datos* - IA y Big Data\n" +
+                       "📱 *Desarrollo Android* - Apps Móviles\n" +
+                       "🎨 *Diseño UX/UI* - Prototipado Figma\n\n" +
+                       "👇 *¿Te interesa uno?*\n" +
+                       "Escribe *2* para contactar a un asesor y e inscribirte.";
+        enviarTexto(numero, texto);
+    }
+
+    // --- OPCIÓN 2: EL ASESOR (LINK) ---
+    private void enviarContactoAsesor(String numero) {
+        // OJO: Cambia el 593... por el número REAL del asesor de APECS
+        String linkWa = "https://wa.me/593999999999?text=Hola,%20quiero%20info%20de%20los%20cursos";
+        
+        String texto = "👨‍💼 *Asesor Académico APECS*\n\n" +
+                       "Para una atención personalizada, chatea directo con nuestro asesor aquí:\n\n" +
+                       "👉 " + linkWa + "\n\n" +
+                       "¡Te esperamos!";
+        enviarTexto(numero, texto);
+    }
+
+    // --- MÉTODO GENÉRICO PARA ENVIAR TEXTO (EL MOTOR) ---
+    private void enviarTexto(String numeroDestino, String mensaje) {
         String url = apiUrl + phoneId + "/messages";
 
-        // 1. CONSTRUCCIÓN DEL JSON IGUALITO A POSTMAN
         Map<String, Object> payload = new HashMap<>();
         payload.put("messaging_product", "whatsapp");
         payload.put("to", numeroDestino);
         payload.put("type", "text");
         
         Map<String, String> textObj = new HashMap<>();
-        textObj.put("body", "🤖 ¡Hola! Soy Java. Si lees esto, ¡FUNCIONÓ!");
+        textObj.put("body", mensaje);
         payload.put("text", textObj);
-
-        // 2. DEBUG DE CREDENCIALES (Para ver si Java lee bien las variables)
-        System.out.println("------------------------------------------------");
-        System.out.println("🚀 INTENTANDO ENVIAR A META...");
-        System.out.println("📍 URL: " + url);
-        System.out.println("🔑 Token usado (primeros 10): " + (token != null && token.length() > 10 ? token.substring(0, 10) + "..." : "NULL O VACÍO"));
-        System.out.println("📱 ID Teléfono: " + phoneId);
-        System.out.println("------------------------------------------------");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -63,22 +103,10 @@ public class WhatsappService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
         try {
-            // 3. EL DISPARO
-            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-            
-            // SI LLEGAMOS AQUÍ, ES VICTORIA
-            System.out.println("✅ ¡ÉXITO! Meta respondió: " + response.getBody());
-
-        } catch (HttpClientErrorException e) {
-            // 4. AQUÍ ESTÁ LA VERDAD (Si falla, Meta nos dirá por qué)
-            System.err.println("❌ ERROR CRÍTICO DE META (Leer atentamente):");
-            System.err.println("👉 CÓDIGO: " + e.getStatusCode());
-            System.err.println("👉 RAZÓN EXACTA: " + e.getResponseBodyAsString()); // <--- ESTO ES ORO
+            restTemplate.postForEntity(url, entity, String.class);
+            System.out.println("✅ Mensaje enviado a: " + numeroDestino);
         } catch (Exception e) {
-            System.err.println("❌ ERROR DE JAVA: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("❌ Error enviando mensaje: " + e.getMessage());
         }
     }
 }
-
-
