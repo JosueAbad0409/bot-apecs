@@ -21,14 +21,16 @@ public class WebhookController {
     public WebhookController(WhatsappService whatsappService) {
         this.whatsappService = whatsappService;
         this.objectMapper = new ObjectMapper();
-        
-        // LOGGING AL INICIAR
-        System.out.println("════════════════════════════════════════════");
-        System.out.println("🤖 WEBHOOK CONTROLLER INICIALIZADO");
-        System.out.println("🔑 Verify Token: " + verifyToken);
-        System.out.println("📍 Ruta: /webhook");
-        System.out.println("════════════════════════════════════════════");
     }
+
+    @PostConstruct
+public void init() {
+    System.out.println("════════════════════════════════════════════");
+    System.out.println("🤖 WEBHOOK CONTROLLER INICIALIZADO");
+    System.out.println("🔑 Verify Token: " + verifyToken);
+    System.out.println("📍 Ruta: /webhook");
+    System.out.println("════════════════════════════════════════════");
+}
 
     // 1. VERIFICACIÓN (GET)
     @GetMapping
