@@ -66,11 +66,11 @@ public class WhatsappService {
             // Rama Derecha del Diagrama
             enviarAcademiaVirtual(from);
             // El diagrama dice "En este momento estoy conectándote...", así que enviamos el link de una
-            enviarContactoAsesor(from, "Hola, quiero crear mi Academia Virtual. Envío mis datos: ");
+            enviarContactoAsesor(from, "👋 Hola, quiero crear mi Academia Virtual. Envío mis datos: ");
             userState.put(from, "START"); // Fin del flujo
         } 
         else {
-            enviarTexto(from, "🤖 Por favor selecciona una opción válida (1 o 2).");
+            enviarTexto(from, "🤖 *Opción no reconocida.*\nPor favor, responde solo con el número *1* o *2*.");
         }
     }
 
@@ -80,46 +80,46 @@ public class WhatsappService {
 
         switch (opcion) {
             case "1":
-                cursoElegido = "Ofimática con IA";
+                cursoElegido = "Ofimática con IA 🤖";
                 mensajeAsesor = "Hola, deseo información sobre el curso de Ofimática con IA.";
                 break;
             case "2":
-                cursoElegido = "Análisis de Datos";
+                cursoElegido = "Análisis de Datos 📊";
                 mensajeAsesor = "Hola, deseo información sobre el curso de Análisis de Datos.";
                 break;
             case "3":
-                cursoElegido = "Programación";
+                cursoElegido = "Programación 💻";
                 mensajeAsesor = "Hola, deseo información sobre el curso de Programación.";
                 break;
             case "4":
-                cursoElegido = "Habilidades Blandas";
+                cursoElegido = "Habilidades Blandas 🗣️";
                 mensajeAsesor = "Hola, deseo información sobre Habilidades Blandas.";
                 break;
             case "5":
-                cursoElegido = "Oferta Completa";
+                cursoElegido = "Oferta Completa 📂";
                 mensajeAsesor = "Hola, deseo descargar su oferta completa de cursos.";
                 break;
             default:
-                enviarTexto(from, "⚠️ Opción incorrecta. Elige un número del 1 al 5.");
+                enviarTexto(from, "⚠️ *Opción incorrecta.*\nPor favor, elige un número del *1 al 5*.");
                 return;
         }
 
         // Según el diagrama: "Se le asigna un Asesor"
-        enviarTexto(from, "✅ Has seleccionado: *" + cursoElegido + "*\nTe conectamos con un asesor para darte la información correspondiente.");
+        enviarTexto(from, "✅ *¡Excelente elección!*\n\nHas seleccionado: *" + cursoElegido + "*\n\n👤 _Te conectamos con un asesor para darte toda la información._");
         enviarContactoAsesor(from, mensajeAsesor);
         
         userState.put(from, "START"); // Reinicia
     }
 
-    // ================= MENSAJES EXACTOS (Copy-Paste del Diagrama) =================
+    // ================= MENSAJES EXACTOS (Decorados) =================
 
     private void enviarMenuPrincipal(String numero) {
         String texto =
                 "👋 *¡Hola! Bienvenido a APECS.*\n" +
-                "Somos expertos en Educación y Capacitación Tecnológica.\n\n" +
-                "Para brindarte la mejor información, por favor selecciona una opción:\n\n" +
-                "1️⃣ Ver Cursos para Mí / Capacitación\n" +
-                "2️⃣ Crear mi academia virtual";
+                "🚀 _Expertos en Educación y Capacitación Tecnológica._\n\n" +
+                "🎯 *Para brindarte la mejor información, selecciona una opción:*\n\n" +
+                "1️⃣  Ver Cursos para Mí / Capacitación 🎓\n" +
+                "2️⃣  Crear mi Academia Virtual 🏫";
 
         enviarTexto(numero, texto);
         userState.put(numero, "MENU_PRINCIPAL");
@@ -127,26 +127,27 @@ public class WhatsappService {
 
     private void enviarListaDeCursos(String numero) {
         String texto =
-                "¿Qué habilidad quieres dominar hoy?\n" +
-                "Tenemos el curso perfecto para impulsar tu perfil profesional:\n\n" +
-                "1️⃣ *Ofimática con IA:*\nDomina Excel y herramientas inteligentes.\n\n" +
-                "2️⃣ *Análisis de Datos:*\nAprende a tomar decisiones con datos reales.\n\n" +
-                "3️⃣ *Programación:*\nCrea soluciones y soporte técnico.\n\n" +
-                "4️⃣ *Habilidades Blandas:*\nLiderazgo y comunicación efectiva.\n\n" +
-                "5️⃣ *Ver Todo:*\nDescarga nuestra oferta completa.";
+                "🎓 *¿Qué habilidad quieres dominar hoy?*\n" +
+                "🔥 _Tenemos el curso perfecto para impulsar tu perfil profesional:_\n\n" +
+                "1️⃣  *Ofimática con IA* 🤖\n      _Domina Excel y herramientas inteligentes._\n\n" +
+                "2️⃣  *Análisis de Datos* 📊\n      _Aprende a tomar decisiones con datos reales._\n\n" +
+                "3️⃣  *Programación* 💻\n      _Crea soluciones y soporte técnico._\n\n" +
+                "4️⃣  *Habilidades Blandas* 🗣️\n      _Liderazgo y comunicación efectiva._\n\n" +
+                "5️⃣  *Ver Todo* 📂\n      _Descarga nuestra oferta completa._";
 
         enviarTexto(numero, texto);
     }
 
     private void enviarAcademiaVirtual(String numero) {
-        // Texto exacto del cuadro derecho
+        // Texto exacto del cuadro derecho pero mejorado
         String texto =
-                "¡Entendido! Nos especializamos en crear *Tu Propia Plataforma de Capacitación*.\n\n" +
-                "Te entregamos tu Aula Virtual lista para que puedas entrenar a tu equipo de trabajo o publicar tus cursos fácilmente.\n\n" +
-                "En este momento estoy conectándote con un Asesor de Proyectos para atenderte mejor.\n\n" +
+                "🙌 *¡Entendido!*\n" +
+                "💻 Nos especializamos en crear *Tu Propia Plataforma de Capacitación*.\n\n" +
+                "🚀 Te entregamos tu *Aula Virtual lista* para que puedas entrenar a tu equipo o publicar tus cursos fácilmente.\n\n" +
+                "👨‍💻 *En este momento estoy conectándote con un Asesor de Proyectos...*\n\n" +
                 "📝 *Por favor, espera un momento y déjanos tus datos:*\n" +
-                "1. Tu Nombre.\n" +
-                "2. Tu número de Cédula o RUC.";
+                "   🔹 1. Tu Nombre\n" +
+                "   🔹 2. Tu número de Cédula o RUC";
 
         enviarTexto(numero, texto);
     }
@@ -159,7 +160,7 @@ public class WhatsappService {
             linkWa += "Hola,%20solicito%20información";
         }
 
-        String texto = "👉 *Clic aquí para hablar con el Asesor:*\n" + linkWa;
+        String texto = "👇 *Clic aquí para hablar con el Asesor:*\n📲 " + linkWa;
         enviarTexto(numero, texto);
     }
 
