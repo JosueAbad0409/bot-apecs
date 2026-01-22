@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap; // Importante para manejar estados
 
 @Service
 public class WhatsappService {
@@ -24,100 +25,144 @@ public class WhatsappService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    // 🧠 MEMORIA DEL BOT: Guarda en qué paso está cada número de teléfono
+    // Clave: Número de teléfono, Valor: Estado actual (ej: "MENU_PRINCIPAL", "MENU_CURSOS")
+    private final Map<String, String> userState = new ConcurrentHashMap<>();
+
     // ================= CEREBRO DEL BOT =================
     public void procesarMensaje(String from, String msgBody) {
-
         String mensaje = msgBody.trim().toLowerCase();
-        System.out.println("📩 Mensaje de " + from + ": " + mensaje);
+        
+        // 1. Obtener el estado actual del usuario (si no existe, es "START")
+        String estadoActual = userState.getOrDefault(from, "START");
 
+        System.out.println("📩 Mensaje de " + from + " | Estado: " + estadoActual + " | Texto: " + mensaje);
+
+        // 2. Comandos globales (siempre funcionan)
         if (mensaje.contains("hola") || mensaje.contains("inicio") || mensaje.contains("menu")) {
             enviarMenuPrincipal(from);
+            return;
         }
-        else if (mensaje.equals("1")) {
-            enviarCursos(from);
-        }
-        else if (mensaje.equals("2")) {
-            enviarAcademiaVirtual(from);
-        }
-        else {
-            enviarTexto(from,
-                    "🤖 *No entendí tu mensaje*\n\n" +
-                    "Por favor escribe el número de una opción:\n\n" +
-                    "1️⃣ Ver cursos para mí / capacitación\n" +
-                    "2️⃣ Crear mi academia virtual");
+
+        // 3. Máquina de Estados: Decide qué hacer según dónde esté el usuario
+        switch (estadoActual) {
+            case "MENU_PRINCIPAL":
+                manejarMenuPrincipal(from, mensaje);
+                break;
+                
+            case "MENU_CURSOS":
+                manejarMenuCursos(from, mensaje);
+                break;
+                
+            default:
+                // Si el estado es desconocido o START, enviamos el menú
+                enviarMenuPrincipal(from);
+                break;
         }
     }
 
-    // ================= MENÚ PRINCIPAL =================
-    private void enviarMenuPrincipal(String numero) {
+    // ================= LÓGICA DE MENÚS =================
 
+    private void manejarMenuPrincipal(String from, String opcion) {
+        if (opcion.equals("1")) {
+            enviarListaDeCursos(from); // Mostramos cursos y pedimos elegir uno
+            userState.put(from, "MENU_CURSOS"); // CAMBIAMOS EL ESTADO A "VIENDO CURSOS"
+        } 
+        else if (opcion.equals("2")) {
+            enviarAcademiaVirtual(from);
+            userState.put(from, "START"); // Reiniciamos estado o lo dejamos en START
+        } 
+        else {
+            enviarTexto(from, "🤖 Opción no válida. Por favor escribe *1* o *2*.");
+        }
+    }
+
+    private void manejarMenuCursos(String from, String opcion) {
+        // Aquí el usuario ya está dentro de la opción 1, eligiendo un curso específico
+        String cursoElegido = "";
+        
+        switch (opcion) {
+            case "1":
+                cursoElegido = "Informática con IA 🤖";
+                break;
+            case "2":
+                cursoElegido = "Análisis de Datos 📊";
+                break;
+            case "3":
+                cursoElegido = "Programación 💻";
+                break;
+            case "4":
+                cursoElegido = "Habilidades Blandas 🗣️";
+                break;
+            default:
+                enviarTexto(from, "⚠️ Opción incorrecta. Elige un número del 1 al 4 para ver detalles del curso.");
+                return; // Salimos para no enviar el asesor todavía
+        }
+
+        // Si eligió un curso válido:
+        enviarDetalleCurso(from, cursoElegido);
+        userState.put(from, "START"); // Reiniciamos el flujo tras dar la info
+    }
+
+    // ================= MENSAJES DE RESPUESTA =================
+
+    private void enviarMenuPrincipal(String numero) {
         String texto =
                 "👋 *¡Hola! Bienvenido a APECS* 🎓\n\n" +
                 "Somos expertos en *Educación y Capacitación Tecnológica* 💻\n\n" +
-                "Para brindarte la mejor información, selecciona una opción:\n\n" +
-                "1️⃣ Ver cursos para mí / capacitación\n" +
+                "Selecciona una opción:\n\n" +
+                "1️⃣ Ver cursos disponibles\n" +
                 "2️⃣ Crear mi academia virtual";
 
         enviarTexto(numero, texto);
+        userState.put(numero, "MENU_PRINCIPAL"); // Establecemos el estado inicial
     }
 
-    // ================= OPCIÓN 1: CURSOS =================
-    private void enviarCursos(String numero) {
-
+    private void enviarListaDeCursos(String numero) {
         String texto =
-                "📚 *¿Qué habilidad quieres dominar hoy?*\n\n" +
-                "Tenemos el curso perfecto para impulsar tu perfil profesional 🚀\n\n" +
+                "📚 *Nuestros Cursos Disponibles*\n\n" +
+                "Escribe el número del curso que te interesa para ver más detalles:\n\n" +
                 "1️⃣ Informática con IA 🤖\n" +
-                "   • Domina Excel y herramientas inteligentes\n\n" +
                 "2️⃣ Análisis de Datos 📊\n" +
-                "   • Aprende a tomar decisiones con datos reales\n\n" +
                 "3️⃣ Programación 💻\n" +
-                "   • Crea soluciones y soporte técnico\n\n" +
-                "4️⃣ Habilidades Blandas 🗣️\n" +
-                "   • Liderazgo y comunicación efectiva\n\n" +
-                "📌 *Un asesor se comunicará contigo para brindarte la información correspondiente*";
+                "4️⃣ Habilidades Blandas 🗣️";
 
         enviarTexto(numero, texto);
-        enviarContactoAsesor(numero);
+        // NO enviamos el contacto del asesor todavía, esperamos que elija
     }
 
-    // ================= OPCIÓN 2: ACADEMIA VIRTUAL =================
-    private void enviarAcademiaVirtual(String numero) {
+    private void enviarDetalleCurso(String numero, String nombreCurso) {
+        String texto = 
+                "✅ Has seleccionado: *" + nombreCurso + "*\n\n" +
+                "Este curso está diseñado para potenciar tu perfil profesional al máximo. 🚀\n\n" +
+                "📌 *¿Quieres inscribirte o recibir el temario?*\n" +
+                "Un asesor está listo para atenderte.";
+        
+        enviarTexto(numero, texto);
+        enviarContactoAsesor(numero); // AHORA SÍ enviamos el asesor
+    }
 
+    private void enviarAcademiaVirtual(String numero) {
         String texto =
                 "🏫 *Crear tu Academia Virtual APECS*\n\n" +
                 "Nos especializamos en crear tu *propia plataforma de capacitación* 🎓\n\n" +
-                "📦 Te entregamos:\n" +
-                "✅ Aula virtual lista\n" +
-                "✅ Herramientas para capacitar a tu equipo\n" +
-                "✅ Publicación fácil de tus cursos\n\n" +
-                "👨‍💼 En este momento te conectamos con un *Asesor de Proyectos*\n\n" +
-                "📝 Por favor ten listos los siguientes datos:\n" +
-                "1️⃣ Tu nombre\n" +
-                "2️⃣ Tu número de cédula o RUC\n\n" +
-                "⏳ En un momento nos comunicamos contigo";
+                "📦 Te entregamos aula virtual, herramientas y más.\n\n" +
+                "⏳ En un momento nos comunicamos contigo.";
 
         enviarTexto(numero, texto);
         enviarContactoAsesor(numero);
     }
 
-    // ================= ASESOR HUMANO =================
     private void enviarContactoAsesor(String numero) {
-
         String linkWa = "https://wa.me/593990844161?text=Hola,%20quiero%20información%20de%20APECS";
-
         String texto =
-                "👨‍💼 *Asesor Académico APECS*\n\n" +
-                "Para una atención personalizada, escríbenos aquí 👇\n\n" +
-                "👉 " + linkWa + "\n\n" +
-                "✨ ¡Será un gusto ayudarte!";
-
+                "👨‍💼 *Habla con un Asesor Académico*\n" +
+                "Haz clic aquí 👉 " + linkWa;
         enviarTexto(numero, texto);
     }
 
-    // ================= MOTOR DE ENVÍO =================
+    // ================= MOTOR DE ENVÍO (Sin cambios) =================
     private void enviarTexto(String numeroDestino, String mensaje) {
-
         String url = apiUrl + phoneId + "/messages";
 
         Map<String, Object> payload = new HashMap<>();
@@ -137,7 +182,7 @@ public class WhatsappService {
 
         try {
             restTemplate.postForEntity(url, entity, String.class);
-            System.out.println("✅ Mensaje enviado correctamente");
+            System.out.println("✅ Mensaje enviado a " + numeroDestino);
         } catch (Exception e) {
             System.err.println("❌ Error enviando mensaje: " + e.getMessage());
         }
