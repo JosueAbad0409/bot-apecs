@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -25,74 +24,107 @@ public class WhatsappService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // --- CEREBRO DEL BOT 🧠 ---
+    // ================= CEREBRO DEL BOT =================
     public void procesarMensaje(String from, String msgBody) {
-        // 1. Limpiamos el mensaje (quitar espacios y minúsculas)
-        String mensaje = msgBody.trim().toLowerCase();
 
+        String mensaje = msgBody.trim().toLowerCase();
         System.out.println("📩 Mensaje de " + from + ": " + mensaje);
 
-        // 2. Lógica del Menú Numérico
-        if (mensaje.contains("hola") || mensaje.contains("inicio") || mensaje.contains("buenas")) {
+        if (mensaje.contains("hola") || mensaje.contains("inicio") || mensaje.contains("menu")) {
             enviarMenuPrincipal(from);
-        } 
+        }
         else if (mensaje.equals("1")) {
-            enviarListaCursos(from);
-        } 
+            enviarCursos(from);
+        }
         else if (mensaje.equals("2")) {
-            enviarContactoAsesor(from);
-        } 
+            enviarAcademiaVirtual(from);
+        }
         else {
-            // Si escribe cualquier otra cosa, le recordamos el menú
-            enviarTexto(from, "🤖 No entendí. Por favor responde con el número de la opción:\n\n1️⃣ Ver Cursos\n2️⃣ Hablar con Asesor");
+            enviarTexto(from,
+                    "🤖 *No entendí tu mensaje*\n\n" +
+                    "Por favor escribe el número de una opción:\n\n" +
+                    "1️⃣ Ver cursos para mí / capacitación\n" +
+                    "2️⃣ Crear mi academia virtual");
         }
     }
 
-    // --- OPCIÓN 0: EL MENÚ PRINCIPAL ---
+    // ================= MENÚ PRINCIPAL =================
     private void enviarMenuPrincipal(String numero) {
-        String texto = "👋 *¡Hola! Bienvenido a APECS* 🎓\n" +
-                       "Tu futuro tecnológico empieza aquí.\n\n" +
-                       "¿En qué podemos ayudarte hoy?\n" +
-                       "*(Escribe el número de la opción)*\n\n" +
-                       "1️⃣ Ver Cursos Disponibles\n" +
-                       "2️⃣ Hablar con un Asesor Humano";
+
+        String texto =
+                "👋 *¡Hola! Bienvenido a APECS* 🎓\n\n" +
+                "Somos expertos en *Educación y Capacitación Tecnológica* 💻\n\n" +
+                "Para brindarte la mejor información, selecciona una opción:\n\n" +
+                "1️⃣ Ver cursos para mí / capacitación\n" +
+                "2️⃣ Crear mi academia virtual";
+
         enviarTexto(numero, texto);
     }
 
-    // --- OPCIÓN 1: LOS CURSOS ---
-    private void enviarListaCursos(String numero) {
-        String texto = "📚 *Nuestros Cursos Destacados:*\n\n" +
-                       "☕ *Java Spring Boot* - Backend Pro\n" +
-                       "🐍 *Python para Datos* - IA y Big Data\n" +
-                       "📱 *Desarrollo Android* - Apps Móviles\n" +
-                       "🎨 *Diseño UX/UI* - Prototipado Figma\n\n" +
-                       "👇 *¿Te interesa uno?*\n" +
-                       "Escribe *2* para contactar a un asesor y e inscribirte.";
+    // ================= OPCIÓN 1: CURSOS =================
+    private void enviarCursos(String numero) {
+
+        String texto =
+                "📚 *¿Qué habilidad quieres dominar hoy?*\n\n" +
+                "Tenemos el curso perfecto para impulsar tu perfil profesional 🚀\n\n" +
+                "1️⃣ Informática con IA 🤖\n" +
+                "   • Domina Excel y herramientas inteligentes\n\n" +
+                "2️⃣ Análisis de Datos 📊\n" +
+                "   • Aprende a tomar decisiones con datos reales\n\n" +
+                "3️⃣ Programación 💻\n" +
+                "   • Crea soluciones y soporte técnico\n\n" +
+                "4️⃣ Habilidades Blandas 🗣️\n" +
+                "   • Liderazgo y comunicación efectiva\n\n" +
+                "📌 *Un asesor se comunicará contigo para brindarte la información correspondiente*";
+
         enviarTexto(numero, texto);
+        enviarContactoAsesor(numero);
     }
 
-    // --- OPCIÓN 2: EL ASESOR (LINK) ---
+    // ================= OPCIÓN 2: ACADEMIA VIRTUAL =================
+    private void enviarAcademiaVirtual(String numero) {
+
+        String texto =
+                "🏫 *Crear tu Academia Virtual APECS*\n\n" +
+                "Nos especializamos en crear tu *propia plataforma de capacitación* 🎓\n\n" +
+                "📦 Te entregamos:\n" +
+                "✅ Aula virtual lista\n" +
+                "✅ Herramientas para capacitar a tu equipo\n" +
+                "✅ Publicación fácil de tus cursos\n\n" +
+                "👨‍💼 En este momento te conectamos con un *Asesor de Proyectos*\n\n" +
+                "📝 Por favor ten listos los siguientes datos:\n" +
+                "1️⃣ Tu nombre\n" +
+                "2️⃣ Tu número de cédula o RUC\n\n" +
+                "⏳ En un momento nos comunicamos contigo";
+
+        enviarTexto(numero, texto);
+        enviarContactoAsesor(numero);
+    }
+
+    // ================= ASESOR HUMANO =================
     private void enviarContactoAsesor(String numero) {
-        // OJO: Cambia el 593... por el número REAL del asesor de APECS
-        String linkWa = "https://wa.me/593999999999?text=Hola,%20quiero%20info%20de%20los%20cursos";
-        
-        String texto = "👨‍💼 *Asesor Académico APECS*\n\n" +
-                       "Para una atención personalizada, chatea directo con nuestro asesor aquí:\n\n" +
-                       "👉 " + linkWa + "\n\n" +
-                       "¡Te esperamos!";
+
+        String linkWa = "https://wa.me/593990844161?text=Hola,%20quiero%20información%20de%20APECS";
+
+        String texto =
+                "👨‍💼 *Asesor Académico APECS*\n\n" +
+                "Para una atención personalizada, escríbenos aquí 👇\n\n" +
+                "👉 " + linkWa + "\n\n" +
+                "✨ ¡Será un gusto ayudarte!";
+
         enviarTexto(numero, texto);
     }
 
-    // --- MÉTODO GENÉRICO PARA ENVIAR TEXTO (EL MOTOR) ---
-    // --- MÉTODO CON RAYOS X (DEBUG EXTREMO) ---
+    // ================= MOTOR DE ENVÍO =================
     private void enviarTexto(String numeroDestino, String mensaje) {
+
         String url = apiUrl + phoneId + "/messages";
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("messaging_product", "whatsapp");
         payload.put("to", numeroDestino);
         payload.put("type", "text");
-        
+
         Map<String, String> textObj = new HashMap<>();
         textObj.put("body", mensaje);
         payload.put("text", textObj);
@@ -103,23 +135,11 @@ public class WhatsappService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
-        // IMPRIMIR DATOS ANTES DE DISPARAR (Para ver si algo va nulo)
-        System.out.println("🚀 INTENTANDO ENVIAR...");
-        System.out.println("👉 URL: " + url);
-        System.out.println("👉 Token (primeros 5): " + (token != null ? token.substring(0, 5) : "NULL"));
-        System.out.println("👉 ID Teléfono: " + phoneId);
-        System.out.println("👉 Destinatario: " + numeroDestino);
-
         try {
             restTemplate.postForEntity(url, entity, String.class);
-            System.out.println("✅ ¡MENSAJE ENVIADO CON ÉXITO!");
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            System.err.println("❌ ERROR DE META (CLIENTE):");
-            System.err.println("👉 Status: " + e.getStatusCode());
-            System.err.println("👉 RESPUESTA COMPLETA: " + e.getResponseBodyAsString());
+            System.out.println("✅ Mensaje enviado correctamente");
         } catch (Exception e) {
-            System.err.println("❌ ERROR GENÉRICO EN JAVA: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("❌ Error enviando mensaje: " + e.getMessage());
         }
     }
 }
