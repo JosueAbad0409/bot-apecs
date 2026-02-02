@@ -87,9 +87,17 @@ public class GeminiService {
             }
             return "Lo siento, estoy actualizando mi base de datos. Por favor escribe 'Menu'.";
 
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // CASO 1: Google rechaza la petición (Error 400 o 401)
+            // Esto nos dirá exactamente por qué Google se queja (API Key mal, JSON mal, etc.)
+            String errorReal = e.getResponseBodyAsString();
+            System.err.println("❌ ERROR GOOGLE: " + errorReal);
+            return "⚠️ Google dice: " + errorReal;
+
         } catch (Exception e) {
+            // CASO 2: Error interno de Java (Conexión, variables nulas, etc.)
             e.printStackTrace();
-            return "Tuve un pequeño error técnico. ¿Podrías intentar de nuevo?";
+            return "⚠️ Error Interno: " + e.getMessage(); 
         }
     }
 }
