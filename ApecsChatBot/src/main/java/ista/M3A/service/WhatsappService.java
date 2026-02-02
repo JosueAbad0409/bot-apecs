@@ -1,5 +1,6 @@
 package ista.M3A.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,52 +26,77 @@ public class WhatsappService {
     @Value("${whatsapp.phone.id}")
     private String phoneId;
 
+    @Autowired
+    private GeminiService geminiService;
+
     private final RestTemplate restTemplate = new RestTemplate();
     private final Map<String, String> userState = new ConcurrentHashMap<>();
 
-    // ================= CEREBRO DEL BOT =================
+    // ================= CEREBRO DEL BOT (MODIFICADO) =================
     public void procesarMensaje(String from, String msgBody) {
-        String mensaje = msgBody.trim().toLowerCase();
+        String mensaje = msgBody.trim(); // Quitamos toLowerCase para que Gemini entienda nombres propios
         String estadoActual = userState.getOrDefault(from, "START");
 
         System.out.println("📩 " + from + " [" + estadoActual + "]: " + mensaje);
 
-        // Reinicio global
-        if (mensaje.contains("hola") || mensaje.contains("inicio") || mensaje.contains("menu")) {
+        // 1. Reinicio global (Palabras clave)
+        if (mensaje.equalsIgnoreCase("hola") || 
+            mensaje.equalsIgnoreCase("inicio") || 
+            mensaje.equalsIgnoreCase("menu")) {
             enviarMenuPrincipal(from);
             return;
         }
 
-        switch (estadoActual) {
-            case "MENU_PRINCIPAL":
-                manejarMenuPrincipal(from, mensaje);
-                break;
-            case "MENU_CURSOS":
-                manejarMenuCursos(from, mensaje);
-                break;
-            default:
-                enviarMenuPrincipal(from);
-                break;
+        // 2. Lógica Híbrida: ¿Es un número de menú o una pregunta para la IA?
+        if (esNumero(mensaje)) {
+            // --- LÓGICA DE MENÚS (Tu código original) ---
+            switch (estadoActual) {
+                case "MENU_PRINCIPAL":
+                    manejarMenuPrincipal(from, mensaje);
+                    break;
+                case "MENU_CURSOS":
+                    manejarMenuCursos(from, mensaje);
+                    break;
+                default:
+                    // Si manda un número fuera de contexto, lo mandamos al inicio
+                    enviarMenuPrincipal(from);
+                    break;
+            }
+        } else {
+            // --- LÓGICA DE IA (Gemini) ---
+            System.out.println("🧠 Consultando a Gemini para: " + mensaje);
+            
+            // Opcional: Enviar mensaje de "Escribiendo..." o "Procesando..."
+            
+            String respuestaIA = geminiService.generarRespuesta(mensaje);
+            enviarTexto(from, respuestaIA);
         }
     }
 
-    // ================= LÓGICA DE FLUJO (Según Diagrama) =================
+    // --- NUEVO MÉTODO AUXILIAR ---
+    private boolean esNumero(String texto) {
+        try {
+            Integer.parseInt(texto);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    // ================= LÓGICA DE FLUJO (Igual que tenías) =================
 
     private void manejarMenuPrincipal(String from, String opcion) {
         if (opcion.equals("1")) {
-            // Rama Izquierda del Diagrama
             enviarListaDeCursos(from);
             userState.put(from, "MENU_CURSOS"); 
         } 
         else if (opcion.equals("2")) {
-            // Rama Derecha del Diagrama
             enviarAcademiaVirtual(from);
-            // El diagrama dice "En este momento estoy conectándote...", así que enviamos el link de una
             enviarContactoAsesor(from, "👋 Hola, quiero crear mi Academia Virtual. Envío mis datos: ");
-            userState.put(from, "START"); // Fin del flujo
+            userState.put(from, "START"); 
         } 
         else {
-            enviarTexto(from, "🤖 *Opción no reconocida.*\nPor favor, responde solo con el número *1* o *2*.");
+            enviarTexto(from, "🤖 *Opción no reconocida.*\nPor favor, responde solo con el número *1* o *2*, o hazme una pregunta.");
         }
     }
 
@@ -104,20 +130,19 @@ public class WhatsappService {
                 return;
         }
 
-        // Según el diagrama: "Se le asigna un Asesor"
         enviarTexto(from, "✅ *¡Excelente elección!*\n\nHas seleccionado: *" + cursoElegido + "*\n\n👤 _Te conectamos con un asesor para darte toda la información._");
         enviarContactoAsesor(from, mensajeAsesor);
         
-        userState.put(from, "START"); // Reinicia
+        userState.put(from, "START");
     }
 
-    // ================= MENSAJES EXACTOS (Decorados) =================
+    // ================= MENSAJES EXACTOS (Igual que tenías) =================
 
     private void enviarMenuPrincipal(String numero) {
         String texto =
                 "👋 *¡Hola! Bienvenido a APECS.*\n" +
                 "🚀 _Expertos en Educación y Capacitación Tecnológica._\n\n" +
-                "🎯 *Para brindarte la mejor información, selecciona una opción:*\n\n" +
+                "Puedes preguntarme lo que quieras sobre nuestros cursos, o seleccionar una opción:\n\n" +
                 "1️⃣  Ver Cursos para Mí / Capacitación 🎓\n" +
                 "2️⃣  Crear mi Academia Virtual 🏫";
 
@@ -139,7 +164,6 @@ public class WhatsappService {
     }
 
     private void enviarAcademiaVirtual(String numero) {
-        // Texto exacto del cuadro derecho pero mejorado
         String texto =
                 "🙌 *¡Entendido!*\n" +
                 "💻 Nos especializamos en crear *Tu Propia Plataforma de Capacitación*.\n\n" +
