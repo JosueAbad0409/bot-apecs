@@ -23,7 +23,7 @@ public class GeminiService {
 
     public String generarRespuesta(String mensajeUsuario) {
         // URL oficial de la API de Google Gemini (Modelo Flash 1.5, rápido y gratuito)
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + apiKey;
 
         try {
             HttpHeaders headers = new HttpHeaders();
