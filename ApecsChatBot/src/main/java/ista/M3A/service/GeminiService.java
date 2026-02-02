@@ -16,36 +16,46 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
-    @Value("${gemini.api.key}") // Asegúrate de tener esto en application.properties
+    @Value("${gemini.api.key}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String generarRespuesta(String mensajeUsuario) {
-        // Usamos el modelo 'gemini-1.5-flash' que es rápido y barato
+        // URL oficial de la API de Google Gemini (Modelo Flash 1.5, rápido y gratuito)
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
 
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            // 1. Configurar el Prompt del Sistema (Personalidad de APECS)
-            // En la API REST básica de Gemini, lo más fácil es unirlo al texto.
-            String promptCompleto = """
-                Instrucciones del Sistema:
-                Eres el asistente virtual de APECS (Expertos en Educación Tecnológica).
-                Tus respuestas deben ser cortas, amables y profesionales.
-                Cursos disponibles: Ofimática con IA, Análisis de Datos, Programación, Habilidades Blandas.
-                Si preguntan precios, di que un asesor les contactará.
+            // =================================================================================
+            // 🧠 CEREBRO DEL VENDEDOR (PROMPT DEL SISTEMA)
+            // Aquí es donde defines la personalidad de tu bot. Edita esto si quieres cambiar cómo habla.
+            // =================================================================================
+            String systemPrompt = """
+                Eres 'APECS Bot', el asistente virtual experto de la empresa APECS (Educación Tecnológica).
                 
-                Pregunta del usuario: 
+                TUS REGLAS DE ORO:
+                1. Tu tono es profesional, cercano y motivador. Usa emojis ocasionalmente (🚀, 🎓, ✅).
+                2. Tienes prohibido inventar precios. Si preguntan precios, di: "Un asesor humano te dará la mejor oferta personalizada".
+                3. Tus respuestas deben ser CORTAS (máximo 30 palabras) para que se lean bien en WhatsApp.
+                4. El objetivo final es que el usuario elija un curso del menú o pida hablar con un asesor.
+                
+                TUS PRODUCTOS (CURSOS):
+                - Ofimática con IA: Excel, Word y herramientas de Inteligencia Artificial.
+                - Análisis de Datos: Power BI, SQL, toma de decisiones.
+                - Programación: Java, Spring Boot, Python.
+                - Habilidades Blandas: Liderazgo y Oratoria.
+                
+                PREGUNTA DEL USUARIO:
                 """ + mensajeUsuario;
 
-            // 2. Construir la estructura JSON específica de Gemini
-            // Estructura: { "contents": [ { "parts": [ { "text": "..." } ] } ] }
-            
+            // =================================================================================
+            // CONSTRUCCIÓN DEL JSON PARA GOOGLE (NO TOCAR)
+            // =================================================================================
             Map<String, String> part = new HashMap<>();
-            part.put("text", promptCompleto);
+            part.put("text", systemPrompt);
 
             List<Map<String, String>> partsList = new ArrayList<>();
             partsList.add(part);
@@ -61,10 +71,10 @@ public class GeminiService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-            // 3. Enviar petición
+            // Enviar petición a Google
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
-            // 4. Extraer respuesta (Parsear el JSON de Gemini)
+            // Leer respuesta
             Map<String, Object> responseBody = response.getBody();
             
             if (responseBody != null && responseBody.containsKey("candidates")) {
@@ -75,12 +85,11 @@ public class GeminiService {
                     return (String) partsResponse.get(0).get("text");
                 }
             }
-            
-            return "Lo siento, no pude procesar tu respuesta con Gemini.";
+            return "Lo siento, estoy actualizando mi base de datos. Por favor escribe 'Menu'.";
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "Error interno consultando a Gemini.";
+            return "Tuve un pequeño error técnico. ¿Podrías intentar de nuevo?";
         }
     }
 }
