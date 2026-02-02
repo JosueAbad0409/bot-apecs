@@ -21,6 +21,24 @@ public class GeminiService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    @PostConstruct
+    public void diagnosticarModelos() {
+        System.out.println("🕵️ INICIANDO DIAGNÓSTICO DE GEMINI...");
+        try {
+            // Esta URL pregunta: "¿Qué modelos tengo disponibles?"
+            String url = "https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey;
+            
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            
+            System.out.println("✅ CONEXIÓN EXITOSA. MODELOS DISPONIBLES:");
+            System.out.println(response.getBody()); // <--- AQUÍ SALDRÁ LA LISTA REAL
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR FATAL DE CONEXIÓN CON GOOGLE:");
+            System.err.println(e.getMessage());
+        }
+    }
+
     public String generarRespuesta(String mensajeUsuario) {
         // URL oficial de la API de Google Gemini (Modelo Flash 1.5, rápido y gratuito)
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey;
