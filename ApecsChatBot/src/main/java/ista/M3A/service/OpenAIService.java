@@ -17,16 +17,17 @@ public class OpenAIService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String generarRespuesta(String mensajeUsuario) {
-
-        String url = "https://api.openai.com/v1/responses";
+        // 1. CORRECCIÓN: La URL correcta para el chat
+        String url = "https://api.openai.com/v1/chat/completions";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiKey);
 
+        // 2. CORRECCIÓN: Estructura del Body (messages en lugar de input)
         Map<String, Object> body = Map.of(
                 "model", "gpt-4o-mini",
-                "input", List.of(
+                "messages", List.of( // Se debe llamar "messages"
                         Map.of(
                                 "role", "system",
                                 "content", "Eres APECS Bot. Responde corto (máx 30 palabras), amable y con emojis 😊. Si preguntan precios: Un asesor humano te dará la mejor oferta 🤝"
@@ -35,19 +36,27 @@ public class OpenAIService {
                                 "role", "user",
                                 "content", mensajeUsuario
                         )
-                )
+                ),
+                "temperature", 0.7 // Opcional: controla la creatividad
         );
 
-        HttpEntity<Map<String, Object>> entity =
-                new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
+            // Realizamos la petición
             Map response = restTemplate.postForObject(url, entity, Map.class);
 
-            List output = (List) response.get("output");
-            Map message = (Map) ((List)((Map)output.get(0)).get("content")).get(0);
+            // 3. CORRECCIÓN: Parseo de la respuesta correcta de OpenAI
+            // Estructura: choices[0] -> message -> content
+            if (response == null || !response.containsKey("choices")) {
+                return "❌ Error: Respuesta vacía de OpenAI";
+            }
 
-            return (String) message.get("text");
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+            Map<String, Object> firstChoice = choices.get(0);
+            Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+
+            return (String) message.get("content");
 
         } catch (Exception e) {
             e.printStackTrace();
