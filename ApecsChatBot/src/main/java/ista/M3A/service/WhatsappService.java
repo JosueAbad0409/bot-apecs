@@ -1,6 +1,7 @@
 package ista.M3A.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,6 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class WhatsappService {
 
+    @Autowired
+    private OpenAIService openAIService;
+
     @Value("${whatsapp.api.url}")
     private String apiUrl;
 
@@ -30,13 +34,14 @@ public class WhatsappService {
 
     // ================= CEREBRO DEL BOT =================
     public void procesarMensaje(String from, String msgBody) {
-        String mensaje = msgBody.trim().toLowerCase();
+        String mensaje = msgBody.trim(); // No hacemos toLowerCase para que la IA entienda mejor los nombres propios
         String estadoActual = userState.getOrDefault(from, "START");
 
         System.out.println("📩 " + from + " [" + estadoActual + "]: " + mensaje);
 
-        // Reinicio global
-        if (mensaje.contains("hola") || mensaje.contains("inicio") || mensaje.contains("menu")) {
+        // Comandos de reinicio forzado
+        if (mensaje.equalsIgnoreCase("hola") || mensaje.equalsIgnoreCase("menu") || mensaje.equalsIgnoreCase("inicio")) {
+            userState.put(from, "START"); // Reseteamos estado
             enviarMenuPrincipal(from);
             return;
         }
@@ -49,7 +54,9 @@ public class WhatsappService {
                 manejarMenuCursos(from, mensaje);
                 break;
             default:
-                enviarMenuPrincipal(from);
+                enviarTexto(from, "🤖 _Pensando..._"); // Opcional: Feedback visual
+                String respuestaIA = openAIService.generarRespuesta(mensaje);
+                enviarTexto(from, respuestaIA);
                 break;
         }
     }
@@ -58,19 +65,20 @@ public class WhatsappService {
 
     private void manejarMenuPrincipal(String from, String opcion) {
         if (opcion.equals("1")) {
-            // Rama Izquierda del Diagrama
             enviarListaDeCursos(from);
-            userState.put(from, "MENU_CURSOS"); 
+            userState.put(from, "MENU_CURSOS");
         } 
         else if (opcion.equals("2")) {
-            // Rama Derecha del Diagrama
             enviarAcademiaVirtual(from);
-            // El diagrama dice "En este momento estoy conectándote...", así que enviamos el link de una
-            enviarContactoAsesor(from, "👋 Hola, quiero crear mi Academia Virtual. Envío mis datos: ");
-            userState.put(from, "START"); // Fin del flujo
+            enviarContactoAsesor(from, "👋 Hola, quiero crear mi Academia Virtual.");
+            userState.put(from, "START");
         } 
         else {
-            enviarTexto(from, "🤖 *Opción no reconocida.*\nPor favor, responde solo con el número *1* o *2*.");
+            // CAMBIO: Si no es 1 ni 2, tal vez está haciendo una pregunta
+            // Regresamos el estado a START para que la próxima vez entre directo a la IA
+            userState.put(from, "START"); 
+            String respuestaIA = openAIService.generarRespuesta(opcion);
+            enviarTexto(from, respuestaIA);
         }
     }
 
