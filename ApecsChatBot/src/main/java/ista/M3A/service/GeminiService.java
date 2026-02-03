@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jakarta.annotation.PostConstruct;
 
 @Service
 public class GeminiService {
@@ -22,56 +21,35 @@ public class GeminiService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @PostConstruct
-    public void diagnosticarModelos() {
-        System.out.println("🕵️ INICIANDO DIAGNÓSTICO DE GEMINI...");
-        try {
-            // Esta URL pregunta: "¿Qué modelos tengo disponibles?"
-            String url = "https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey;
-            
-            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-            
-            System.out.println("✅ CONEXIÓN EXITOSA. MODELOS DISPONIBLES:");
-            System.out.println(response.getBody()); // <--- AQUÍ SALDRÁ LA LISTA REAL
-            
-        } catch (Exception e) {
-            System.err.println("❌ ERROR FATAL DE CONEXIÓN CON GOOGLE:");
-            System.err.println(e.getMessage());
-        }
-    }
-
     public String generarRespuesta(String mensajeUsuario) {
-        // URL oficial de la API de Google Gemini (Modelo Flash 1.5, rápido y gratuito)
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey;
+        // ✅ USAMOS EL MODELO ESTÁNDAR (Flash 1.5)
+        // Esta URL es la más estable actualmente.
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
 
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             // =================================================================================
-            // 🧠 CEREBRO DEL VENDEDOR (PROMPT DEL SISTEMA)
-            // Aquí es donde defines la personalidad de tu bot. Edita esto si quieres cambiar cómo habla.
+            // 🧠 PERSONALIDAD DEL BOT
             // =================================================================================
             String systemPrompt = """
-                Eres 'APECS Bot', el asistente virtual experto de la empresa APECS (Educación Tecnológica).
+                Eres 'APECS Bot', de la empresa APECS.
+                Responde de forma corta (máx 30 palabras), amable y usa emojis.
                 
-                TUS REGLAS DE ORO:
-                1. Tu tono es profesional, cercano y motivador. Usa emojis ocasionalmente (🚀, 🎓, ✅).
-                2. Tienes prohibido inventar precios. Si preguntan precios, di: "Un asesor humano te dará la mejor oferta personalizada".
-                3. Tus respuestas deben ser CORTAS (máximo 30 palabras) para que se lean bien en WhatsApp.
-                4. El objetivo final es que el usuario elija un curso del menú o pida hablar con un asesor.
+                TUS CURSOS:
+                - Ofimática con IA
+                - Análisis de Datos
+                - Programación
+                - Habilidades Blandas
                 
-                TUS PRODUCTOS (CURSOS):
-                - Ofimática con IA: Excel, Word y herramientas de Inteligencia Artificial.
-                - Análisis de Datos: Power BI, SQL, toma de decisiones.
-                - Programación: Java, Spring Boot, Python.
-                - Habilidades Blandas: Liderazgo y Oratoria.
+                Si preguntan precios, di: "Un asesor humano te dará la mejor oferta".
                 
                 PREGUNTA DEL USUARIO:
                 """ + mensajeUsuario;
 
             // =================================================================================
-            // CONSTRUCCIÓN DEL JSON PARA GOOGLE (NO TOCAR)
+            // ESTRUCTURA JSON
             // =================================================================================
             Map<String, String> part = new HashMap<>();
             part.put("text", systemPrompt);
@@ -90,7 +68,7 @@ public class GeminiService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-            // Enviar petición a Google
+            // Enviar a Google
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
             // Leer respuesta
@@ -104,17 +82,15 @@ public class GeminiService {
                     return (String) partsResponse.get(0).get("text");
                 }
             }
-            return "Lo siento, estoy actualizando mi base de datos. Por favor escribe 'Menu'.";
+            return "Lo siento, estoy reiniciando mis sistemas. Intenta en un minuto.";
 
         } catch (org.springframework.web.client.HttpClientErrorException e) {
-            // CASO 1: Google rechaza la petición (Error 400 o 401)
-            // Esto nos dirá exactamente por qué Google se queja (API Key mal, JSON mal, etc.)
+            // Muestra el error real de Google en el chat para que sepamos qué pasa
             String errorReal = e.getResponseBodyAsString();
             System.err.println("❌ ERROR GOOGLE: " + errorReal);
-            return "⚠️ Google dice: " + errorReal;
+            return "⚠️ Error de Configuración: " + errorReal;
 
         } catch (Exception e) {
-            // CASO 2: Error interno de Java (Conexión, variables nulas, etc.)
             e.printStackTrace();
             return "⚠️ Error Interno: " + e.getMessage(); 
         }
