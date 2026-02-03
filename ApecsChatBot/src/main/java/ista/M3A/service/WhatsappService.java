@@ -63,14 +63,21 @@ public class WhatsappService {
                     break;
             }
         } else {
-            // --- LÓGICA DE IA (Gemini) ---
-            System.out.println("🧠 Consultando a Gemini para: " + mensaje);
-            
-            // Opcional: Enviar mensaje de "Escribiendo..." o "Procesando..."
-            
-            String respuestaIA = geminiService.generarRespuesta(mensaje);
-            enviarTexto(from, respuestaIA);
-        }
+
+    if (!estadoActual.equals("START")) {
+        enviarTexto(from,
+            "⚠️ Por favor responde solo con el *número del menú* 📋\n" +
+            "Escribe *menu* para volver al inicio."
+        );
+        return;
+    }
+
+    // SOLO AQUÍ entra Gemini
+    System.out.println("🧠 Consultando a Gemini para: " + mensaje);
+    String respuestaIA = geminiService.generarRespuesta(mensaje);
+    enviarTexto(from, respuestaIA);
+}
+
     }
 
     // --- NUEVO MÉTODO AUXILIAR ---
