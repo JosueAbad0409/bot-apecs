@@ -32,7 +32,7 @@ public class WhatsappService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final Map<String, String> userState = new ConcurrentHashMap<>();
 
-    // ================= CEREBRO DEL BOT =================
+    // ================= CEREBRO DEL BOT ================
     public void procesarMensaje(String from, String msgBody) {
 
         String mensaje = msgBody.trim();
